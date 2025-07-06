@@ -1,4 +1,4 @@
-# chatbot_gemini.py
+# main.py (a.k.a chatbot_gemini.py)
 
 import os
 from google import genai
@@ -11,7 +11,7 @@ load_dotenv()
 # Initialize the Gemini client
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# set the model to use
+# Set the model to use
 model = "gemini-2.0-flash"
 
 # Set up configuration
@@ -19,7 +19,7 @@ generate_content_config = types.GenerateContentConfig(
     response_mime_type="text/plain",
 )
 
-# Start chatbot loop
+# 🔁 CLI Chatbot Function
 def chat():
     print("Gemini Chatbot (type 'exit' to quit)")
     history = []
@@ -30,20 +30,25 @@ def chat():
             print("Chatbot: Goodbye!")
             break
 
-        history.append(types.Content(role="user", parts=[types.Part(text=user_input)]))
+        reply, history = get_gemini_response(history, user_input)
+        print(f"Chatbot: {reply}")
 
-        # Generate Gemini response
-        response = client.models.generate_content(
-            model=model,
-            contents=history,
-            config=generate_content_config,
-        )
+# ✅ Add this function for UI reuse
+def get_gemini_response(history, user_input):
+    history.append(types.Content(role="user", parts=[types.Part(text=user_input)]))
 
-        bot_reply = response.text.strip()
-        print(f"Chatbot: {bot_reply}")
+    response = client.models.generate_content(
+        model=model,
+        contents=history,
+        config=generate_content_config,
+    )
 
-        # store bot's actual reply in history
-        history.append(types.Content(role="model", parts=[types.Part(text=bot_reply)]))
+    bot_reply = response.text.strip()
 
+    history.append(types.Content(role="model", parts=[types.Part(text=bot_reply)]))
+
+    return bot_reply, history
+
+# Entry point for CLI
 if __name__ == "__main__":
     chat()
